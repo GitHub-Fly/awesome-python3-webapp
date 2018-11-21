@@ -10,16 +10,18 @@ import aiomysql
 def log(sql, args=()):
     logging.info('SQL: %s' % sql)
 
+# 这个注解的作用是什么？
 @asyncio.coroutine
 def create_pool(loop, **kw):
     logging.info('create database connection pool...')
+    # 全局变量
     global __pool
     __pool = yield from aiomysql.create_pool(
         host=kw.get('host', 'localhost'),
         port=kw.get('port', 3306),
-        user=kw['user'],
-        password=kw['password'],
-        db=kw['db'],
+        user=kw['root'],
+        password=kw['123456'],
+        db=kw['test'],
         charset=kw.get('charset', 'utf8'),
         autocommit=kw.get('autocommit', True),
         maxsize=kw.get('maxsize', 10),
@@ -31,8 +33,11 @@ def create_pool(loop, **kw):
 def select(sql, args, size=None):
     log(sql, args)
     global __pool
+    # with关键字的作用和用法？
     with (yield from __pool) as conn:
+        # yield from调用子协程，并返回子协程执行结果
         cur = yield from conn.cursor(aiomysql.DictCursor)
+        # 替换占位符
         yield from cur.execute(sql.replace('?', '%s'), args or ())
         if size:
             rs = yield from cur.fetchmany(size)
@@ -50,6 +55,7 @@ def execute(sql, args, autocommit=True):
             yield from conn.begin()
         try:
             cur = yield from conn.cursor()
+            # 占位符替换
             yield from cur.execute(sql.replace('?', '%s'), args)
             affected = cur.rowcount
             yield from cur.close()
@@ -67,14 +73,17 @@ def create_args_string(num):
         L.append('?')
     return ', '.join(L)
 
+# Field父类定义
 class Field(object):
 
+    # __init__　类似于java私有构造器
     def __init__(self, name, column_type, primary_key, default):
         self.name = name
         self.column_type = column_type
         self.primary_key = primary_key
         self.default = default
 
+    # __str__　类似于java toString()
     def __str__(self):
         return '<%s, %s:%s>' % (self.__class__.__name__, self.column_type, self.name)
 

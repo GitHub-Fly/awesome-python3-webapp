@@ -5,6 +5,7 @@
 Models for user, blog, comment.
 '''
 
+# 作者
 __author__ = 'Michael Liao'
 
 import time, uuid
@@ -15,6 +16,7 @@ def next_id():
     return '%015d%s000' % (int(time.time() * 1000), uuid.uuid4().hex)
 
 class User(Model):
+    # User类对应数据库users表
     __table__ = 'users'
 
     id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
